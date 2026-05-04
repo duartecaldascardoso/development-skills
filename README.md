@@ -7,3 +7,4 @@ I'm sharing these openly because I believe they can add value to others. This re
 ## Contents
 
 - [Organized and Modular React Components](skills/react-components.md)
+- [Creating and Maintaining Python AI Agents](skills/python-ai-agents.md)
