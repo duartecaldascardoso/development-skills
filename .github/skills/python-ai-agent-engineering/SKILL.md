@@ -24,6 +24,81 @@ my_agent/
 └── runtime.py
 ```
 
+## Example: Minimal, Safe Agent Module Split
+
+`agent.py`
+
+```python
+from langchain.agents import create_agent
+from .prompts import SYSTEM_PROMPT
+from .tools import search_codebase
+
+agent = create_agent(
+    model="anthropic:claude-sonnet-4-5",
+    tools=[search_codebase],
+    system_prompt=SYSTEM_PROMPT,
+)
+
+def run_agent(user_input: str):
+    return agent.invoke({"messages": [{"role": "user", "content": user_input}]})
+```
+
+`prompts.py`
+
+```python
+SYSTEM_PROMPT = """
+You are a senior software engineer assistant.
+Prefer explicit, verifiable answers.
+When using tools, explain assumptions and limits.
+""".strip()
+```
+
+`schemas.py`
+
+```python
+from pydantic import BaseModel, Field
+
+class CodeSearchInput(BaseModel):
+    query: str = Field(min_length=1, description="Text or regex to search for.")
+    path: str = Field(default=".", description="Directory to search within.")
+
+class CodeSearchResult(BaseModel):
+    matches: list[str]
+```
+
+`tools.py`
+
+```python
+from pathlib import Path
+from .schemas import CodeSearchInput, CodeSearchResult
+
+def search_codebase(query: str, path: str = ".") -> dict:
+    args = CodeSearchInput(query=query, path=path)
+    base = Path(args.path).resolve()
+    if not base.exists() or not base.is_dir():
+        raise ValueError(f"Invalid search path: {base}")
+
+    matches: list[str] = []
+    for file in base.rglob("*.py"):
+        text = file.read_text(encoding="utf-8")
+        if args.query in text:
+            matches.append(str(file))
+
+    return CodeSearchResult(matches=matches).model_dump()
+```
+
+`runtime.py`
+
+```python
+import os
+
+def require_env(name: str) -> str:
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"Missing required environment variable: {name}")
+    return value
+```
+
 ## Module Responsibilities
 
 ### `agent.py` (wiring/orchestration)
@@ -44,6 +119,30 @@ my_agent/
 - Validate all inputs before side effects.
 - Return predictable, serializable outputs.
 - Do not use raw `eval` for expression execution or code generation paths.
+
+#### Bad vs Good Tool Safety
+
+```python
+# Bad
+def calculate(expr: str) -> str:
+    return str(eval(expr))
+```
+
+```python
+# Good
+import ast
+import operator as op
+
+OPS = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul, ast.Div: op.truediv}
+
+def safe_calculate(expr: str) -> float:
+    node = ast.parse(expr, mode="eval").body
+    if not isinstance(node, ast.BinOp) or type(node.op) not in OPS:
+        raise ValueError("Only simple binary arithmetic is allowed.")
+    if not isinstance(node.left, ast.Constant) or not isinstance(node.right, ast.Constant):
+        raise ValueError("Only numeric constants are allowed.")
+    return OPS[type(node.op)](float(node.left.value), float(node.right.value))
+```
 
 ### `schemas.py` (contracts)
 

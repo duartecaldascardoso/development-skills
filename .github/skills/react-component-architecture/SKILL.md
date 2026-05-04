@@ -24,6 +24,87 @@ src/components/FeatureWidget/
 └── FeatureWidget.test.tsx
 ```
 
+## Example: Presentation + Hook Split
+
+`FeatureWidget.tsx`
+
+```tsx
+import type { FeatureWidgetProps } from "./FeatureWidget.types";
+import { useFeatureWidget } from "./useFeatureWidget";
+import styles from "./FeatureWidget.module.css";
+
+export function FeatureWidget({ userId }: FeatureWidgetProps) {
+  const { user, isLoading, error, onRefresh } = useFeatureWidget(userId);
+
+  if (isLoading) return <p>Loading user...</p>;
+  if (error) return <p role="alert">Failed: {error.message}</p>;
+  if (!user) return <p>No user found.</p>;
+
+  return (
+    <section className={styles.container}>
+      <h2>{user.name}</h2>
+      <p>{user.email}</p>
+      <button onClick={onRefresh}>Refresh</button>
+    </section>
+  );
+}
+```
+
+`useFeatureWidget.ts`
+
+```ts
+import { useCallback, useEffect, useState } from "react";
+import type { User } from "./FeatureWidget.types";
+
+export function useFeatureWidget(userId: string) {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchUser = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    const response = await fetch(`/api/users/${userId}`);
+    if (!response.ok) {
+      throw new Error(`Request failed with ${response.status}`);
+    }
+    const data = (await response.json()) as User;
+    setUser(data);
+    setIsLoading(false);
+  }, [userId]);
+
+  useEffect(() => {
+    fetchUser().catch((err: unknown) => {
+      setError(err instanceof Error ? err : new Error("Unknown error"));
+      setIsLoading(false);
+    });
+  }, [fetchUser]);
+
+  return { user, isLoading, error, onRefresh: fetchUser };
+}
+```
+
+`FeatureWidget.types.ts`
+
+```ts
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface FeatureWidgetProps {
+  userId: string;
+}
+```
+
+`index.ts`
+
+```ts
+export { FeatureWidget } from "./FeatureWidget";
+export type { FeatureWidgetProps, User } from "./FeatureWidget.types";
+```
+
 ## Rules
 
 ### 1) `Component.tsx` is presentation-first
@@ -65,6 +146,18 @@ When improving an existing component:
 3. Extract and tighten types into `Component.types.ts`.
 4. Keep file names and import style consistent with the repository's existing pattern.
 5. Add/update tests that cover both rendered states and key behavior paths.
+
+## Example Test Pattern
+
+```tsx
+import { render, screen } from "@testing-library/react";
+import { FeatureWidget } from "./FeatureWidget";
+
+test("shows loading state", () => {
+  render(<FeatureWidget userId="u_123" />);
+  expect(screen.getByText(/loading user/i)).toBeInTheDocument();
+});
+```
 
 ## Quality Bar
 
