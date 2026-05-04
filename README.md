@@ -1,10 +1,39 @@
 # Development Skills
 
-These are some of the personal skills I use and maintain daily for my development according to my standards and taste.
+This repository contains production-ready GitHub Copilot CLI skills.
 
-I'm sharing these openly because I believe they can add value to others. This repository contains documents outlining my preferred approaches to various aspects of software engineering, learned and refined over time.
+Each skill follows the required `SKILL.md` format with YAML frontmatter and is organized for direct use in:
 
-## Contents
+- project scope: `.github/skills/...`
+- personal scope: `~/.copilot/skills/...`
 
-- [Organized and Modular React Components](skills/react-components.md)
-- [Creating and Maintaining Python AI Agents](skills/python-ai-agents.md)
+## Skills
+
+| Skill | Purpose |
+| --- | --- |
+| `react-component-architecture` | Build/refactor React components into modular, maintainable folders with clear separation of presentation, logic, types, and tests. |
+| `python-ai-agent-engineering` | Build/refactor Python AI agent code into safe, testable modules with explicit prompts, tools, schemas, and runtime wiring. |
+
+## Repository Layout
+
+```text
+.github/skills/
+├── react-component-architecture/
+│   └── SKILL.md
+└── python-ai-agent-engineering/
+    └── SKILL.md
+```
+
+## Installing as Personal (Global) Skills
+
+```bash
+mkdir -p ~/.copilot/skills
+cp -R .github/skills/* ~/.copilot/skills/
+```
+
+Then in an active Copilot CLI session:
+
+```text
+/skills reload
+/skills list
+```
