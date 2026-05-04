@@ -34,16 +34,16 @@ This file contains the orchestration logic. This file wires together the LLM and
 ```python
 # my_agent/agent.py
 from langchain.agents import create_agent
-from .tools import check_weather
+from .tools import calculate
 from .prompts import SYSTEM_PROMPT
 
 graph = create_agent(
     model="anthropic:claude-sonnet-4-5-20250929",
-    tools=[check_weather],
+    tools=[calculate],
     system_prompt=SYSTEM_PROMPT,
 )
 
-inputs = {"messages": [{"role": "user", "content": "what is the weather in sf"}]}
+inputs = {"messages": [{"role": "user", "content": "what is 5 times 5?"}]}
 for chunk in graph.stream(inputs, stream_mode="updates"):
     print(chunk)
 ```
@@ -63,10 +63,13 @@ Agents interact with the world via tools. Define your functions here. Ensure eac
 
 ```python
 # my_agent/tools.py
-@.antigravity/extensions/james-yu.latex-workshop-10.13.1-universal/data/packages/datatool-base.json
-def check_weather(location: str) -> str:
-    '''Return the weather forecast for the specified location.'''
-    return f"It's always sunny in {location}"
+from langchain_core.tools import tool
+
+@tool
+def calculate(expression: str) -> str:
+    '''Evaluate a simple mathematical expression.'''
+    # In a real agent, use a safer eval or a proper parsing library
+    return str(eval(expression))
 ```
 
 ### 4. Schemas and Data Models (`schemas.py`)
