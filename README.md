@@ -11,6 +11,7 @@ Each skill follows the required `SKILL.md` format with YAML frontmatter and is o
 
 | Skill | Purpose |
 | --- | --- |
+| `obsidian-codebase` | Navigate and reason about Obsidian vaults structured as codebases where all files are markdown notes. Understand architecture across many files and extract knowledge efficiently. |
 | `react-component-architecture` | Build/refactor React components into modular, maintainable folders with clear separation of presentation, logic, types, and tests. |
 | `python-ai-agent-engineering` | Build/refactor Python AI agent code into safe, testable modules with explicit prompts, tools, schemas, and runtime wiring. |
 
@@ -18,6 +19,8 @@ Each skill follows the required `SKILL.md` format with YAML frontmatter and is o
 
 ```text
 .github/skills/
+├── obsidian-codebase/
+│   └── SKILL.md
 ├── react-component-architecture/
 │   └── SKILL.md
 └── python-ai-agent-engineering/
